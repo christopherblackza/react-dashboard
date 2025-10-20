@@ -1,0 +1,210 @@
+Project Instructions: Next.js + Supabase Admin Dashboard
+Overview
+
+Build a web-based admin dashboard for our internal SaaS tool.
+The system will allow users to:
+
+Manage clients
+
+View reports and analytics
+
+Send notifications
+
+Handle subscriptions and payments via Stripe
+
+This must be a production-grade full-stack web app using Next.js + Supabase, with authentication, role-based access, realtime updates, and billing integration.
+
+🏗️ Core Stack
+
+Frontend: React.js, Next.js (App Router), TypeScript
+
+UI: Tailwind CSS, shadcn/ui, React Hook Form, Zod, Lucide icons
+
+Backend / Database: Supabase (Postgres, Auth, RLS, Realtime)
+
+Realtime: Socket.io or Pusher
+
+Payments: Stripe API (Checkout, Portal, Webhooks)
+
+Auth: JWT-based, with role-based access control
+
+Notifications: In-app + Email (Resend or SendGrid)
+
+Hosting: Vercel (frontend), Supabase (backend)
+
+🔐 Authentication & Roles
+
+Auth via Supabase (email/password + magic link)
+
+JWT validation on server
+
+Roles: admin, manager, analyst, viewer
+
+Role-based UI and API restrictions
+
+Row Level Security (RLS) policies in Supabase for multi-tenant orgs
+
+📊 Features
+1. Dashboard & Reports
+
+Overview metrics (Total Clients, MRR, Active Subs, Churn, ARPU)
+
+Charts (MRR over time, clients by plan) using Recharts
+
+Date range filters + CSV export
+
+2. Client Management
+
+CRUD clients: name, email, owner, tags, plan, MRR
+
+Notes & activity timeline per client
+
+Realtime updates on client list (Supabase Realtime or Socket.io)
+
+3. Notifications
+
+In-app notification center (bell icon)
+
+Email alerts for key events (new client, failed payment, etc.)
+
+Mark notifications as read
+
+4. Billing (Stripe)
+
+Stripe Checkout and Customer Portal integration
+
+Subscriptions (monthly, annual, trial support)
+
+Webhook handling (checkout.session.completed, invoice.failed, etc.)
+
+Show subscription status in dashboard
+
+5. Admin Panel
+
+Manage users and roles
+
+View analytics
+
+Audit logs (events table)
+
+🗄️ Database Schema (Supabase)
+Table	Description
+organizations	id, name, created_at
+profiles	id, auth_user_id, org_id, full_name, role
+clients	id, org_id, name, email, owner_id, status, plan, mrr, tags, created_at
+client_notes	id, client_id, author_id, body, created_at
+events	id, org_id, type, entity, entity_id, payload, created_at
+subscriptions	id, org_id, stripe_customer_id, stripe_sub_id, status, plan, period_end
+notifications	id, org_id, user_id, type, title, body, read_at
+
+RLS rules must enforce org_id boundaries — users only see their own organization’s data.
+
+⚡ Realtime
+
+Supabase Realtime for table updates
+
+Socket.io or Pusher for custom broadcast events (e.g., report export complete)
+
+Realtime presence optional (show online users)
+
+🧾 API Endpoints
+
+Use Next.js Route Handlers (/app/api/...)
+
+Endpoint	Method	Description
+/api/clients	GET/POST/PATCH	CRUD client records
+/api/notifications	GET/POST	In-app notifications
+/api/reports/export	POST	Triggers report export job
+/api/stripe/webhook	POST	Handles Stripe events
+/api/users/invite	POST	Admin invites user
+
+All endpoints must verify JWT and role permissions.
+
+🖥️ Pages (Next.js App Router)
+
+/login → authentication
+
+/ → main dashboard
+
+/clients → list + CRUD
+
+/clients/[id] → detail, notes, events
+
+/reports → analytics & exports
+
+/notifications → in-app alerts
+
+/admin/users → role management
+
+/billing → Stripe portal link
+
+🧰 Dev & Tooling
+
+Type Safety: TypeScript + Zod
+
+Linting & Formatting: ESLint + Prettier
+
+Testing: Vitest (unit), Playwright (e2e)
+
+Seed Script: creates demo org, users, and clients
+
+CI/CD: GitHub Actions or Vercel CI
+
+🧩 Environment Variables
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+PUSHER_APP_ID=
+PUSHER_KEY=
+PUSHER_SECRET=
+PUSHER_CLUSTER=
+RESEND_API_KEY=
+
+✅ Deliverables
+
+Complete codebase (Next.js + Supabase + Stripe)
+
+Supabase schema and migration scripts
+
+Working RLS and role-based auth
+
+Deployed demo (Vercel + Supabase)
+
+README with setup instructions
+
+Test suite with example runs
+
+Short Loom walkthrough (optional)
+
+🧱 Milestones
+
+Database + Auth setup (Supabase, RLS)
+
+Client CRUD with Realtime updates
+
+Reports and analytics module
+
+Stripe integration
+
+Admin panel and notifications
+
+Final testing + deploy
+
+🎯 Definition of Done
+
+Auth + RLS fully functional
+
+Stripe subscription sync working end-to-end
+
+Dashboard live with realtime data
+
+Admin panel managing users and roles
+
+Reports filterable and exportable
+
+Clean UI and responsive design
+
+Full README and test coverage
