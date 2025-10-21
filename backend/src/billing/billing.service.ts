@@ -279,16 +279,51 @@ export class BillingService {
         return;
       }
 
+      // Helper function to safely convert Stripe timestamp to ISO string
+      const safeTimestampToISO = (timestamp: number | null | undefined, fieldName: string): string | null => {
+        if (!timestamp || typeof timestamp !== 'number' || timestamp <= 0) {
+          console.log(`Warning: Invalid or missing timestamp for ${fieldName}:`, timestamp);
+          return null;
+        }
+        
+        try {
+          const date = new Date(timestamp * 1000);
+          if (isNaN(date.getTime())) {
+            console.log(`Warning: Invalid date created from timestamp for ${fieldName}:`, timestamp);
+            return null;
+          }
+          return date.toISOString();
+        } catch (error) {
+          console.log(`Error converting timestamp to ISO for ${fieldName}:`, error);
+          return null;
+        }
+      };
+
+      // Extract timestamps from subscription items (where they're actually located)
+      const firstItem = subscription.items.data[0];
+      console.log('Raw subscription timestamps:');
+      console.log('subscription.start_date:', subscription.start_date);
+      console.log('first_item.current_period_start:', firstItem?.current_period_start);
+      console.log('first_item.current_period_end:', firstItem?.current_period_end);
+      console.log('canceled_at:', subscription.canceled_at);
+
+      // Validate subscription items exist
+      if (!firstItem) {
+        console.log('ERROR: No subscription items found');
+        this.logger.error('No subscription items found in subscription', { subscriptionId: subscription.id });
+        return;
+      }
+
       const subscriptionData = {
         org_id: orgId,
         stripe_customer_id: subscription.customer as string,
         stripe_subscription_id: subscription.id,
-        stripe_price_id: subscription.items.data[0]?.price.id,
+        stripe_price_id: firstItem.price.id,
         status: subscription.status,
-        current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-        current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+        current_period_start: safeTimestampToISO(firstItem.current_period_start || subscription.start_date, 'current_period_start'),
+        current_period_end: safeTimestampToISO(firstItem.current_period_end, 'current_period_end'),
         cancel_at_period_end: subscription.cancel_at_period_end,
-        cancelled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+        cancelled_at: safeTimestampToISO(subscription.canceled_at, 'cancelled_at'),
         updated_at: new Date().toISOString(),
       };
 
