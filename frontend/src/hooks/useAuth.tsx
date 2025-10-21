@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, authService, LoginCredentials } from '../lib/auth';
+import { User, authService, LoginCredentials, RegisterCredentials } from '../lib/auth';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -31,6 +32,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     setIsLoading(false);
   }, []);
+
+  const register = async (credentials: RegisterCredentials) => {
+    try {
+      setIsLoading(true);
+      const response = await authService.register(credentials);
+      setUser(response.user);
+      toast.success('Account created successfully! Welcome!');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Registration failed';
+      toast.error(message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -78,6 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     isAuthenticated,
     login,
+    register,
     logout,
     refreshUser,
   };

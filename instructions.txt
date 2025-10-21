@@ -1,7 +1,7 @@
-Project Instructions: Next.js + Supabase Admin Dashboard
+Project Instructions: React + NestJS Admin Dashboard (SaaS)
 Overview
 
-Build a web-based admin dashboard for our internal SaaS tool.
+Build a full-stack, production-ready Admin Dashboard for our internal SaaS tool.
 The system will allow users to:
 
 Manage clients
@@ -12,54 +12,83 @@ Send notifications
 
 Handle subscriptions and payments via Stripe
 
-This must be a production-grade full-stack web app using Next.js + Supabase, with authentication, role-based access, realtime updates, and billing integration.
+This will be a React SPA (CSR) for the frontend and a NestJS REST API for the backend.
+The app must include authentication, role-based access, realtime updates, and billing integration.
 
 🏗️ Core Stack
 
-Frontend: React.js, Next.js (App Router), TypeScript
+Frontend:
 
-UI: Tailwind CSS, shadcn/ui, React Hook Form, Zod, Lucide icons
+React (Vite or CRA)
 
-Backend / Database: Supabase (Postgres, Auth, RLS, Realtime)
+TypeScript
 
-Realtime: Socket.io or Pusher
+Tailwind CSS + shadcn/ui
 
-Payments: Stripe API (Checkout, Portal, Webhooks)
+React Hook Form + Zod (validation)
 
-Auth: JWT-based, with role-based access control
+Axios (API communication)
 
-Notifications: In-app + Email (Resend or SendGrid)
+Recharts (data visualization)
 
-Hosting: Vercel (frontend), Supabase (backend)
+Zustand or Redux Toolkit (state management)
+
+Backend:
+
+NestJS (REST + WebSockets)
+
+TypeORM or Prisma with PostgreSQL
+
+JWT Auth + Role-based Guard Middleware
+
+WebSockets via Socket.io (realtime)
+
+Stripe API (Checkout, Billing, Webhooks)
+
+Resend or SendGrid (email notifications)
+
+Hosting:
+
+Frontend → Vercel or Netlify
+
+Backend → Render, Railway, or AWS
+
+PostgreSQL → Supabase or Neon.tech
 
 🔐 Authentication & Roles
 
-Auth via Supabase (email/password + magic link)
+Auth via NestJS (JWT + Refresh Tokens)
 
-JWT validation on server
+Email/password and magic-link support (optional via Resend)
 
 Roles: admin, manager, analyst, viewer
 
-Role-based UI and API restrictions
+Role-based guards in NestJS
 
-Row Level Security (RLS) policies in Supabase for multi-tenant orgs
+Secure cookies for JWT refresh
+
+Password hashing with bcrypt
 
 📊 Features
 1. Dashboard & Reports
 
-Overview metrics (Total Clients, MRR, Active Subs, Churn, ARPU)
+Overview metrics: Total Clients, MRR, Active Subs, Churn, ARPU
 
-Charts (MRR over time, clients by plan) using Recharts
+Charts (Recharts): MRR over time, clients by plan
 
 Date range filters + CSV export
 
+Realtime metric updates (WebSockets)
+
 2. Client Management
 
-CRUD clients: name, email, owner, tags, plan, MRR
+CRUD for clients: name, email, owner, tags, plan, MRR
 
-Notes & activity timeline per client
+Notes and activity timeline per client
 
-Realtime updates on client list (Supabase Realtime or Socket.io)
+Realtime updates on client list via WebSockets
+
+Filtering and search
 
 3. Notifications
 
@@ -71,140 +100,150 @@ Mark notifications as read
 
 4. Billing (Stripe)
 
-Stripe Checkout and Customer Portal integration
+Stripe Checkout & Customer Portal
 
-Subscriptions (monthly, annual, trial support)
+Subscription tiers (monthly, annual, trial)
 
-Webhook handling (checkout.session.completed, invoice.failed, etc.)
+Webhook handling:
 
-Show subscription status in dashboard
+checkout.session.completed
+
+invoice.payment_failed
+
+Show live subscription status
+
+Automatic trial expiry handling
 
 5. Admin Panel
 
-Manage users and roles
-
-View analytics
+Manage users, roles, and permissions
 
 Audit logs (events table)
 
-🗄️ Database Schema (Supabase)
+System-level analytics dashboard
+
+🗄️ Database Schema (PostgreSQL)
 Table	Description
 organizations	id, name, created_at
-profiles	id, auth_user_id, org_id, full_name, role
+users	id, org_id, email, password_hash, full_name, role, created_at
 clients	id, org_id, name, email, owner_id, status, plan, mrr, tags, created_at
 client_notes	id, client_id, author_id, body, created_at
 events	id, org_id, type, entity, entity_id, payload, created_at
 subscriptions	id, org_id, stripe_customer_id, stripe_sub_id, status, plan, period_end
 notifications	id, org_id, user_id, type, title, body, read_at
 
-RLS rules must enforce org_id boundaries — users only see their own organization’s data.
+Multi-tenant security: Each query must enforce org_id isolation in all endpoints.
 
 ⚡ Realtime
 
-Supabase Realtime for table updates
+WebSockets via Socket.io
 
-Socket.io or Pusher for custom broadcast events (e.g., report export complete)
+Broadcast events for:
 
-Realtime presence optional (show online users)
+Client created/updated
 
-🧾 API Endpoints
+Report export complete
 
-Use Next.js Route Handlers (/app/api/...)
+New notifications
 
+Presence tracking (optional)
+
+🧾 API Endpoints (NestJS)
 Endpoint	Method	Description
-/api/clients	GET/POST/PATCH	CRUD client records
-/api/notifications	GET/POST	In-app notifications
-/api/reports/export	POST	Triggers report export job
-/api/stripe/webhook	POST	Handles Stripe events
-/api/users/invite	POST	Admin invites user
+/api/auth/login	POST	Authenticate user
+/api/auth/register	POST	Register new user
+/api/clients	GET/POST/PATCH/DELETE	CRUD for clients
+/api/notifications	GET/POST	Manage in-app notifications
+/api/reports/export	POST	Trigger report export job
+/api/stripe/webhook	POST	Handle Stripe events
+/api/users/invite	POST	Admin invites new user
+/api/admin/users	GET/POST	Manage user roles
 
-All endpoints must verify JWT and role permissions.
+All routes use:
 
-🖥️ Pages (Next.js App Router)
+JWT auth guard
 
-/login → authentication
+Role guard (admin/manager/etc.)
 
-/ → main dashboard
+Exception filters for clean error responses
 
-/clients → list + CRUD
-
-/clients/[id] → detail, notes, events
-
-/reports → analytics & exports
-
-/notifications → in-app alerts
-
-/admin/users → role management
-
-/billing → Stripe portal link
-
+🖥️ Frontend Routes (React CSR)
+Route	Description
+/login	Authentication page
+/	Dashboard overview
+/clients	Client list & CRUD
+/clients/:id	Client detail + notes
+/reports	Analytics & exports
+/notifications	Notification center
+/admin/users	User management
+/billing	Stripe portal & subscription info
 🧰 Dev & Tooling
 
 Type Safety: TypeScript + Zod
 
 Linting & Formatting: ESLint + Prettier
 
-Testing: Vitest (unit), Playwright (e2e)
+Testing: Jest (unit) + Playwright (E2E)
 
-Seed Script: creates demo org, users, and clients
+Seed Script: Create demo org, users, and clients
 
-CI/CD: GitHub Actions or Vercel CI
+CI/CD: GitHub Actions or Render CI
 
 🧩 Environment Variables
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+JWT_SECRET=
+REFRESH_TOKEN_SECRET=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-PUSHER_APP_ID=
-PUSHER_KEY=
-PUSHER_SECRET=
-PUSHER_CLUSTER=
+STRIPE_PUBLISHABLE_KEY=
 RESEND_API_KEY=
+SOCKET_IO_SERVER_URL=
+FRONTEND_URL=
 
 ✅ Deliverables
 
-Complete codebase (Next.js + Supabase + Stripe)
+Complete codebase: React (frontend) + NestJS (backend)
 
-Supabase schema and migration scripts
+PostgreSQL schema + migration scripts
 
-Working RLS and role-based auth
+Role-based auth guards and JWT logic
 
-Deployed demo (Vercel + Supabase)
+Stripe billing flow end-to-end
 
-README with setup instructions
+Deployed demo (Vercel/Netlify + Render/Railway)
 
-Test suite with example runs
+README with setup and .env configuration
 
-Short Loom walkthrough (optional)
+Example test suite and Postman collection
+
+Optional Loom walkthrough of key features
 
 🧱 Milestones
 
-Database + Auth setup (Supabase, RLS)
+Database + Auth setup (NestJS, Postgres)
 
-Client CRUD with Realtime updates
+Client CRUD + Realtime updates
 
-Reports and analytics module
+Reports & analytics module
 
-Stripe integration
+Stripe integration + webhook handling
 
-Admin panel and notifications
+Admin panel + notification system
 
-Final testing + deploy
+Final testing + deployment
 
 🎯 Definition of Done
 
-Auth + RLS fully functional
+Secure JWT auth + role-based routes
 
-Stripe subscription sync working end-to-end
+Stripe subscription sync fully functional
 
 Dashboard live with realtime data
 
-Admin panel managing users and roles
+Admin panel fully managing users and roles
 
 Reports filterable and exportable
 
-Clean UI and responsive design
+Clean, responsive UI
 
-Full README and test coverage
+CI/CD + README complete

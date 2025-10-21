@@ -11,6 +11,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  organizationName?: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   refresh_token: string;
@@ -19,6 +27,18 @@ export interface AuthResponse {
 }
 
 export const authService = {
+  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+    const response = await api.post('/auth/register', credentials);
+    const data = response.data;
+    
+    // Store tokens
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    
+    return data;
+  },
+
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.post('/auth/login', credentials);
     const data = response.data;

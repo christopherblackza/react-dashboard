@@ -10,7 +10,7 @@ export const STRIPE_CONFIG = {
       description: 'Perfect for small teams getting started',
       price: 29,
       interval: 'month',
-      stripePriceId: 'price_starter_monthly', // Replace with actual Stripe price ID
+      stripePriceId: 'price_1SKRejEBIvM6Lq7zS7NLNGZP', // Replace with actual Stripe price ID
       features: [
         'Up to 5 team members',
         'Basic reporting',
@@ -24,7 +24,7 @@ export const STRIPE_CONFIG = {
       description: 'Advanced features for growing businesses',
       price: 99,
       interval: 'month',
-      stripePriceId: 'price_professional_monthly', // Replace with actual Stripe price ID
+      stripePriceId: 'price_1SKRgJEBIvM6Lq7zovyjPfgS', // Replace with actual Stripe price ID
       features: [
         'Up to 25 team members',
         'Advanced reporting & analytics',
@@ -40,7 +40,7 @@ export const STRIPE_CONFIG = {
       description: 'Full-featured solution for large organizations',
       price: 299,
       interval: 'month',
-      stripePriceId: 'price_enterprise_monthly', // Replace with actual Stripe price ID
+      stripePriceId: 'price_1SKRgfEBIvM6Lq7zLHQXdKtk', // Replace with actual Stripe price ID
       features: [
         'Unlimited team members',
         'Custom reporting & analytics',
@@ -163,7 +163,7 @@ export const getSubscriptionStatusLabel = (status: string): string => {
 
 // Stripe API functions
 export const createCheckoutSession = async (priceId: string) => {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   const response = await fetch(`${apiUrl}/billing/checkout-session`, {
     method: 'POST',
     headers: {
@@ -186,7 +186,14 @@ export const createCheckoutSession = async (priceId: string) => {
 }
 
 export const createPortalSession = async () => {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  // First, get the subscription to retrieve the customer ID
+  const subscription = await fetchSubscription()
+  
+  if (!subscription || !subscription.stripe_customer_id) {
+    throw new Error('No active subscription found. Please subscribe to a plan first.')
+  }
+
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   const response = await fetch(`${apiUrl}/billing/portal-session`, {
     method: 'POST',
     headers: {
@@ -194,7 +201,7 @@ export const createPortalSession = async () => {
       'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
     },
     body: JSON.stringify({
-      customerId: 'temp_customer_id', // This would need to be retrieved from user profile
+      customerId: subscription.stripe_customer_id,
       returnUrl: `${window.location.origin}/billing`,
     }),
   })
@@ -208,7 +215,7 @@ export const createPortalSession = async () => {
 }
 
 export const fetchSubscription = async (): Promise<Subscription | null> => {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   const response = await fetch(`${apiUrl}/billing/subscriptions`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
